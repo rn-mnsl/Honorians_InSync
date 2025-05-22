@@ -1,0 +1,6 @@
+[theme]
+primaryColor             = "#7B1113"   # DHVSU maroon
+backgroundColor          = "#FFFFFF"   # pure white canvas
+secondaryBackgroundColor = "#FFF7E1"   # very light gold for sidebar & panels
+textColor                = "#272019"   # near-black, warm tint
+font                     = "sans serif"
