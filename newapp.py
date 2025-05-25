@@ -5,19 +5,241 @@ from datetime import datetime
 import io
 import base64
 
+# --- Page Config ---
+st.set_page_config(
+    page_title="Honorians InSync - ASRMS",
+    page_icon="📅",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# --- Helper Function Definitions FIRST ---
-# process_instructor_data, process_room_data, get_classes_to_schedule, generate_schedule_attempt
-# (Assume these functions are defined here as before)
-# Paste your existing functions here:
+# --- Custom CSS for Modern Design ---
+st.markdown("""
+<style>
+    /* Modern Color Scheme */
+    :root {
+        --primary-color: #2E86AB;
+        --secondary-color: #A23B72;
+        --success-color: #27AE60;
+        --warning-color: #F39C12;
+        --danger-color: #E74C3C;
+        --dark-bg: #1a1a1a;
+        --light-bg: #f8f9fa;
+    }
+    
+    /* Main Container Styling */
+    .main {
+        padding: 1rem;
+        background-color: var(--light-bg);
+    }
+    
+    /* Card-like containers */
+    .stExpander {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        border: none !important;
+    }
+    
+    /* Buttons */
+    .stButton > button {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        background-color: #236b8e;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
+        background-color: #f0f2f6;
+        padding: 0.5rem;
+        border-radius: 10px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        padding: 0 20px;
+        background-color: white;
+        border-radius: 5px;
+        color: #333;
+        font-weight: 500;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    /* Schedule Table */
+    table.schedule_table {
+        border-collapse: collapse;
+        width: 100%;
+        background-color: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    table.schedule_table th, table.schedule_table td {
+        border: 1px solid #e0e0e0;
+        padding: 12px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 0.85em;
+    }
+    
+    table.schedule_table th {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    table.schedule_table td:first-child {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+    
+    table.schedule_table td {
+        transition: background-color 0.3s ease;
+    }
+    
+    table.schedule_table td:hover {
+        background-color: #f0f8ff;
+    }
+    
+    /* Success/Error Messages */
+    .stSuccess {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+        border-radius: 5px;
+        padding: 0.75rem 1.25rem;
+    }
+    
+    .stError {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+        border-radius: 5px;
+        padding: 0.75rem 1.25rem;
+    }
+    
+    .stWarning {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+        border-radius: 5px;
+        padding: 0.75rem 1.25rem;
+    }
+    
+    /* File Uploader */
+    .uploadedFile {
+        background-color: white;
+        border-radius: 5px;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Sidebar */
+    .css-1d391kg {
+        background-color: #f8f9fa;
+    }
+    
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    /* Workflow Cards */
+    .workflow-card {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        height: 100%;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .workflow-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    
+    .workflow-card h4 {
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Data Blueprint Cards */
+    .data-blueprint-item {
+        background-color: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 0.5rem;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .item-label {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .item-headers {
+        font-size: 0.9em;
+        color: #666;
+    }
+    
+    /* Conflict Resolution Cards */
+    .conflict-card {
+        background-color: #fff5f5;
+        border-left: 4px solid var(--danger-color);
+        padding: 1rem;
+        border-radius: 5px;
+        margin-bottom: 1rem;
+    }
+    
+    /* Print Styles */
+    @media print {
+        .stButton, .stSelectbox, .stFileUploader, .stSidebar {
+            display: none !important;
+        }
+        
+        table.schedule_table {
+            box-shadow: none;
+            page-break-inside: avoid;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# Add these near the top of your app.py, or in a config section
+# --- Helper Function Definitions ---
 DAYS_ORDER = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
 
 TIME_SLOTS_ORDER_24HR = [
     "7:00-8:00", "8:00-9:00", "9:00-10:00", "10:00-11:00", 
     "11:00-12:00", "12:00-13:00", "13:00-14:00", "14:00-15:00", 
-    "15:00-16:00", "16:00-17:00", "17:00-18:00"  #if your schedule extends later
+    "15:00-16:00", "16:00-17:00", "17:00-18:00"
 ]
 
 def clean_html_for_export(html_string):
@@ -127,55 +349,38 @@ def get_color_for_subject(subject_code, subject_codes_list=None):
             subject_codes_list.append(subject_code)
         index = subject_codes_list.index(subject_code)
         return color_palette[index % len(color_palette)]
-    
+
 def format_time_slot_for_display(time_slot_24hr):
-    """Converts a 'HH:MM-HH:MM' 24-hour string to 'H:MM AM/PM - H:MM AM/PM' or 'H AM/PM - H AM/PM'."""
+    """Converts a 'HH:MM-HH:MM' 24-hour string to 'H:MM AM/PM - H:MM AM/PM'."""
     try:
         start_str, end_str = time_slot_24hr.split('-')
-        
-        # Use strptime to parse and strftime to format
-        # %I for 12-hour, %M for minute, %p for AM/PM
-        # Using a dummy date because strptime needs a date part
         start_dt = datetime.strptime(start_str, "%H:%M")
         end_dt = datetime.strptime(end_str, "%H:%M")
         
-        # Format without leading zero for hour if it's single digit (e.g., 7 AM instead of 07 AM)
-        # and handle 12 PM/AM correctly.
-        start_display = start_dt.strftime("%I:%M %p").lstrip('0').replace(" 00", " 12") # Handle 12 AM as 12:00 AM not 00:00 AM
-        if start_display.startswith(":"): start_display = "12" + start_display # Correct 00:MM AM to 12:MM AM
+        start_display = start_dt.strftime("%I:%M %p").lstrip('0').replace(" 00", " 12")
+        if start_display.startswith(":"): start_display = "12" + start_display
 
         end_display = end_dt.strftime("%I:%M %p").lstrip('0').replace(" 00", " 12")
         if end_display.startswith(":"): end_display = "12" + end_display
 
         return f"{start_display} - {end_display}"
     except ValueError:
-        # Fallback if the format is unexpected
         return time_slot_24hr
 
-# Generate the display labels for the timetable rows
 TIME_SLOTS_DISPLAY = [format_time_slot_for_display(ts) for ts in TIME_SLOTS_ORDER_24HR]
 
 def check_manual_assignment_conflicts(schedule_df, new_class_details):
-    """
-    Checks if manually assigning new_class_details would conflict with the existing schedule_df.
-    
-    Args:
-        schedule_df (pd.DataFrame): The current generated schedule.
-        new_class_details (dict): Dict with 'Instructor', 'Room', 'Day', 'Time Slot'.
-                                 Can also include 'Subject Code', 'Section' for error messages.
-    
-    Returns:
-        list: A list of conflict messages. Empty if no conflicts.
-    """
+    """Enhanced conflict checking with section conflicts."""
     found_conflicts = []
     
     if schedule_df is None or schedule_df.empty:
-        return [] # No existing schedule, so no conflicts with it
+        return []
 
     teacher = new_class_details['Instructor']
     room = new_class_details['Room']
     day = new_class_details['Day']
     time_slot = new_class_details['Time Slot']
+    section = new_class_details.get('Section')
 
     # Check Teacher Conflict
     teacher_conflict = schedule_df[
@@ -204,6 +409,21 @@ def check_manual_assignment_conflicts(schedule_df, new_class_details):
             f"{conflicting_class['Subject Code']} in section {conflicting_class['Section']} "
             f"at {day} {time_slot}."
         )
+    
+    # Check Section Conflict
+    if section:
+        section_conflict = schedule_df[
+            (schedule_df['Section'] == section) &
+            (schedule_df['Day'] == day) &
+            (schedule_df['Time Slot'] == time_slot)
+        ]
+        if not section_conflict.empty:
+            conflicting_class = section_conflict.iloc[0]
+            found_conflicts.append(
+                f"Section Conflict: {section} already has "
+                f"{conflicting_class['Subject Code']} scheduled "
+                f"at {day} {time_slot}."
+            )
         
     return found_conflicts
 
@@ -249,7 +469,7 @@ def get_classes_to_schedule(sections_df, subjects_df, curriculum_df):
                     'subject_code': subject_code, 'subject_name': subject_details['Subject Name'],
                     'required_specialization': subject_details['Required Specialization']})
             else:
-                st.warning(f"Subject Code '{subject_code}' (curriculum) not in subjects list for section {section_name}.")
+                st.warning(f"Subject Code '{subject_code}' not found in subjects list for section {section_name}.")
     return classes_list
 
 def generate_schedule_attempt(classes_to_schedule, parsed_instructors_orig, parsed_rooms_orig):
@@ -524,41 +744,66 @@ def clear_uploaded_files():
             st.session_state[key] = None
 
 def load_all_data_from_session_uploads():
+    """Load all data from uploaded files."""
     # Sections
     sections_file_obj = st.session_state.get('sections_upload_main')
     if sections_file_obj is not None and st.session_state.sections_df is None:
         try:
-            df = pd.read_csv(sections_file_obj); st.session_state.sections_df = df
-            st.session_state.data_loaded_flags['sections'] = True; st.success("Sections data loaded!")
-        except Exception as e: st.error(f"Error Sections: {e}"); st.session_state.data_loaded_flags['sections'] = False
+            df = pd.read_csv(sections_file_obj)
+            st.session_state.sections_df = df
+            st.session_state.data_loaded_flags['sections'] = True
+            st.success("✅ Sections data loaded!")
+        except Exception as e:
+            st.error(f"❌ Error loading Sections: {e}")
+            st.session_state.data_loaded_flags['sections'] = False
+    
     # Instructors
     instructors_file_obj = st.session_state.get('instructors_upload_main')
     if instructors_file_obj is not None and st.session_state.instructors_raw_df is None:
         try:
-            df = pd.read_csv(instructors_file_obj); st.session_state.instructors_raw_df = df
-            st.session_state.data_loaded_flags['instructors_raw'] = True; st.success("Instructor raw data loaded!")
-        except Exception as e: st.error(f"Error Instructors: {e}"); st.session_state.data_loaded_flags['instructors_raw'] = False
+            df = pd.read_csv(instructors_file_obj)
+            st.session_state.instructors_raw_df = df
+            st.session_state.data_loaded_flags['instructors_raw'] = True
+            st.success("✅ Instructor data loaded!")
+        except Exception as e:
+            st.error(f"❌ Error loading Instructors: {e}")
+            st.session_state.data_loaded_flags['instructors_raw'] = False
+    
     # Subjects
     subjects_file_obj = st.session_state.get('subjects_upload_main')
     if subjects_file_obj is not None and st.session_state.subjects_df is None:
         try:
-            df = pd.read_csv(subjects_file_obj); st.session_state.subjects_df = df
-            st.session_state.data_loaded_flags['subjects'] = True; st.success("Subjects data loaded!")
-        except Exception as e: st.error(f"Error Subjects: {e}"); st.session_state.data_loaded_flags['subjects'] = False
+            df = pd.read_csv(subjects_file_obj)
+            st.session_state.subjects_df = df
+            st.session_state.data_loaded_flags['subjects'] = True
+            st.success("✅ Subjects data loaded!")
+        except Exception as e:
+            st.error(f"❌ Error loading Subjects: {e}")
+            st.session_state.data_loaded_flags['subjects'] = False
+    
     # Rooms
     rooms_file_obj = st.session_state.get('rooms_upload_main')
     if rooms_file_obj is not None and st.session_state.rooms_raw_df is None:
         try:
-            df = pd.read_csv(rooms_file_obj); st.session_state.rooms_raw_df = df
-            st.session_state.data_loaded_flags['rooms_raw'] = True; st.success("Rooms raw data loaded!")
-        except Exception as e: st.error(f"Error Rooms: {e}"); st.session_state.data_loaded_flags['rooms_raw'] = False
+            df = pd.read_csv(rooms_file_obj)
+            st.session_state.rooms_raw_df = df
+            st.session_state.data_loaded_flags['rooms_raw'] = True
+            st.success("✅ Rooms data loaded!")
+        except Exception as e:
+            st.error(f"❌ Error loading Rooms: {e}")
+            st.session_state.data_loaded_flags['rooms_raw'] = False
+    
     # Curriculum
     curriculum_file_obj = st.session_state.get('curriculum_upload_main')
     if curriculum_file_obj is not None and st.session_state.curriculum_df is None:
         try:
-            df = pd.read_csv(curriculum_file_obj); st.session_state.curriculum_df = df
-            st.session_state.data_loaded_flags['curriculum'] = True; st.success("Curriculum mapping loaded!")
-        except Exception as e: st.error(f"Error Curriculum: {e}"); st.session_state.data_loaded_flags['curriculum'] = False
+            df = pd.read_csv(curriculum_file_obj)
+            st.session_state.curriculum_df = df
+            st.session_state.data_loaded_flags['curriculum'] = True
+            st.success("✅ Curriculum mapping loaded!")
+        except Exception as e:
+            st.error(f"❌ Error loading Curriculum: {e}")
+            st.session_state.data_loaded_flags['curriculum'] = False
 
 def create_timetable_grid(schedule_df, entity_type=None, selected_entity=None):
     """Create a timetable grid from schedule data with color coding."""
@@ -618,15 +863,7 @@ def create_timetable_grid(schedule_df, entity_type=None, selected_entity=None):
 
     return timetable
 
-
-
-# --- Streamlit App Layout Starts Here ---
-st.set_page_config(layout="wide") 
-st.title("Honorians InSync - Automated Resource and Scheduling Management System")
-
-
 # --- Session State Initialization ---
-# (Ensure this is complete as per previous discussions)
 if 'data_loaded_flags' not in st.session_state:
     st.session_state.data_loaded_flags = {
         'sections': False, 'instructors_raw': False, 'subjects': False, 
@@ -642,16 +879,22 @@ if 'parsed_rooms' not in st.session_state: st.session_state.parsed_rooms = None
 if 'classes_to_be_scheduled' not in st.session_state: st.session_state.classes_to_be_scheduled = None
 if 'generated_schedule_df' not in st.session_state: st.session_state.generated_schedule_df = None
 if 'conflicts' not in st.session_state: st.session_state.conflicts = []
-# --- End of Session State Initialization ---
 
+# --- Main App Title with Modern Hero Section ---
+st.markdown("""
+<div class="hero-section">
+    <h1 style="margin: 0; font-size: 2.5rem;">📅 Honorians InSync</h1>
+    <p style="font-size: 1.2rem; margin-top: 0.5rem;">Automated Resource and Scheduling Management System</p>
+</div>
+""", unsafe_allow_html=True)
 
-# --- Define Tabs (Adding a new first tab) ---
+# --- Define Tabs ---
 tab_about, tab_upload, tab_run, tab_schedule, tab_conflicts = st.tabs([
-    "Workflow & About",             # New first tab
-    "1. Upload & Verify Data", 
-    "2. Run Scheduler", 
-    "3. View Generated Schedule", 
-    "4. Resolve Conflicts"
+    "🏠 About & Workflow",
+    "📤 Upload & Verify Data", 
+    "🚀 Run Scheduler", 
+    "📅 View Schedule", 
+    "⚠️ Resolve Conflicts"
 ])
 
 # --- Tab 0: Workflow & About ---
@@ -870,9 +1113,10 @@ with tab_upload:
             with st.expander("🗺️ Curriculum Mapping Preview", expanded=False):
                 st.dataframe(st.session_state.curriculum_df.head(), use_container_width=True)
                 st.caption(f"Total curriculum entries: {len(st.session_state.curriculum_df)}")
+
 # --- Tab 2: Run Scheduler ---
 with tab_run:
-    st.header("Run the Automated Scheduler")
+    st.header("🚀 Run the Automated Scheduler")
     
     ready_to_schedule_check = (
         st.session_state.classes_to_be_scheduled and 
@@ -881,32 +1125,58 @@ with tab_run:
     )
 
     if not ready_to_schedule_check:
-        st.warning("Please ensure all data is uploaded and processed in Tab 1 before running the scheduler.")
+        st.warning("⚠️ Please ensure all data is uploaded and processed in the Upload tab before running the scheduler.")
+    else:
+        st.success(f"✅ Ready to schedule {len(st.session_state.classes_to_be_scheduled)} class instances!")
     
-    if st.button("Generate Class Schedule", disabled=not ready_to_schedule_check, type="primary"):
-        with st.spinner("Generating schedule... This may take a moment."):
-            schedule_result, conflicts_result = generate_schedule_attempt(
-                st.session_state.classes_to_be_scheduled,
-                st.session_state.parsed_instructors,
-                st.session_state.parsed_rooms
-            )
-        st.session_state.generated_schedule_df = pd.DataFrame(schedule_result)
-        st.session_state.conflicts = conflicts_result
-        
-        if st.session_state.generated_schedule_df is not None and not st.session_state.generated_schedule_df.empty:
-            st.success(f"Schedule generation complete! {len(st.session_state.generated_schedule_df)} classes scheduled.")
-            if st.session_state.conflicts:
-                 st.warning(f"{len(st.session_state.conflicts)} conflicts or issues found. Check Tab 4.")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        if st.button("🎯 Generate Class Schedule", 
+                     disabled=not ready_to_schedule_check, 
+                     type="primary", 
+                     use_container_width=True):
+            
+            with st.spinner("🔄 Generating optimal schedule... This may take a moment."):
+                schedule_result, conflicts_result = generate_schedule_attempt(
+                    st.session_state.classes_to_be_scheduled,
+                    st.session_state.parsed_instructors,
+                    st.session_state.parsed_rooms
+                )
+            
+            st.session_state.generated_schedule_df = pd.DataFrame(schedule_result)
+            st.session_state.conflicts = conflicts_result
+            
+            # Clear uploaded files after successful generation
+            clear_uploaded_files()
+            
+            if st.session_state.generated_schedule_df is not None and not st.session_state.generated_schedule_df.empty:
+                st.balloons()
+                st.success(f"✅ Schedule generation complete! {len(st.session_state.generated_schedule_df)} classes successfully scheduled.")
+                
+                # Show summary statistics
+                summary_cols = st.columns(4)
+                with summary_cols[0]:
+                    st.metric("Total Classes Scheduled", len(st.session_state.generated_schedule_df))
+                with summary_cols[1]:
+                    st.metric("Conflicts Found", len(st.session_state.conflicts))
+                with summary_cols[2]:
+                    if st.session_state.get('classes_to_be_scheduled') and len(st.session_state.classes_to_be_scheduled) > 0:
+                        success_rate = (len(st.session_state.generated_schedule_df) / len(st.session_state.classes_to_be_scheduled) * 100)
+                        st.metric("Success Rate", f"{success_rate:.1f}%")
+                    else:
+                        st.metric("Success Rate", "N/A")
+                with summary_cols[3]:
+                    st.metric("Unscheduled Classes", len([c for c in st.session_state.conflicts if c['type'] == 'Unscheduled Class']))
+                
+                st.info("📄 Uploaded files have been cleared. You can now view and export the generated schedule.")
             else:
-                 st.info("No conflicts detected from the scheduler run.")
-        elif st.session_state.conflicts:
-             st.error(f"Scheduler run complete. No classes scheduled. {len(st.session_state.conflicts)} conflicts/issues found.")
-        else:
-             st.info("Scheduler run complete. No classes scheduled and no conflicts reported (check input data and curriculum).")
+                st.error("❌ No classes could be scheduled. Please check your input data and try again.")
 
 # --- Tab 3: View Generated Schedule ---
 # In Tab 3, replace the export section with this:
 with tab_schedule:
+    st.header("📅 Generated Class Schedule")
 
     if st.session_state.generated_schedule_df is not None and not st.session_state.generated_schedule_df.empty:
         
@@ -943,6 +1213,14 @@ with tab_schedule:
             filter_suffix = ""
             if current_filter_type != "Overall View" and current_entity != "All":
                 filter_suffix = f"_{current_filter_type}_{current_entity.replace(' ', '_')}"
+            
+            st.download_button(
+                label="📥 Download CSV",
+                data=csv,
+                file_name=f"schedule{filter_suffix}_{timestamp}.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
         
         with export_cols[2]:
             # Export filtered timetable
@@ -1131,62 +1409,79 @@ with tab_schedule:
             st.info("No schedule data to display for the selected filter.")
     else:
         st.info("🔄 No schedule has been generated yet. Please run the scheduler first.")
-# --- Tab 4: View Conflicts & Issues ---
-with tab_conflicts:
-    st.header("Resolve Scheduling Conflicts")
 
+# --- Tab 4: Resolve Conflicts ---
+with tab_conflicts:
+    st.header("⚠️ Resolve Scheduling Conflicts")
+
+    # Initialize conflict resolution session states
     if 'selected_conflict_to_resolve_idx' not in st.session_state:
-        st.session_state.selected_conflict_to_resolve_idx = None 
-    if 'selected_conflict_type' not in st.session_state: # To know what kind of conflict we are resolving
+        st.session_state.selected_conflict_to_resolve_idx = None
+    if 'selected_conflict_type' not in st.session_state:
         st.session_state.selected_conflict_type = None
     if 'manual_assignment_feedback' not in st.session_state:
         st.session_state.manual_assignment_feedback = None
-    if 'class_to_modify_from_double_booking_idx' not in st.session_state: # For teacher double booking
-         st.session_state.class_to_modify_from_double_booking_idx = None
-
+    if 'class_to_modify_from_double_booking_idx' not in st.session_state:
+        st.session_state.class_to_modify_from_double_booking_idx = None
 
     if st.session_state.conflicts:
-        st.subheader("Overall Conflict Summary")
-        conflicts_df_display = pd.DataFrame(list(st.session_state.conflicts))
-        st.dataframe(conflicts_df_display, height=200)
+        # Summary metrics
+        conflict_cols = st.columns(4)
+        
+        unscheduled_count = len([c for c in st.session_state.conflicts if c['type'] == 'Unscheduled Class'])
+        double_booking_count = len([c for c in st.session_state.conflicts if 'Double' in c['type']])
+        
+        with conflict_cols[0]:
+            st.metric("Total Conflicts", len(st.session_state.conflicts))
+        with conflict_cols[1]:
+            st.metric("Unscheduled Classes", unscheduled_count)
+        with conflict_cols[2]:
+            st.metric("Double Bookings", double_booking_count)
+        with conflict_cols[3]:
+            st.metric("Other Issues", len(st.session_state.conflicts) - unscheduled_count - double_booking_count)
+        
+        st.markdown("---")
+        
+        # Conflict Overview
+        st.subheader("📋 Conflict Overview")
+        conflicts_df_display = pd.DataFrame(st.session_state.conflicts)
+        st.dataframe(conflicts_df_display, use_container_width=True, height=200)
+        
         st.markdown("---")
 
-        # --- Section for Selecting ANY Conflict Type to Resolve ---
-        st.subheader("Select a Conflict to Resolve:")
+        # Conflict Resolution Section
+        st.subheader("🔧 Select a Conflict to Resolve")
 
         conflict_options = ["Select a conflict..."]
-        # Store more info than just display string for easier lookup
-        resolvable_conflict_details = [] 
+        resolvable_conflict_details = []
 
         for idx, c in enumerate(st.session_state.conflicts):
-            display_str = f"Orig.Idx {idx}: {c['type']} - "
+            display_str = f"#{idx}: {c['type']} - "
             if c['type'] == 'Unscheduled Class':
-                display_str += f"Sec: {c.get('section', 'N/A')}, Subj: {c.get('subject', 'N/A')}"
-                # Only add if it's the type of unscheduled we can handle now
-                if "no common available time slot found" in c.get('reason', '').lower() or \
-                   "suitable combination found" in c.get('reason', '').lower():
-                    conflict_options.append(display_str)
-                    resolvable_conflict_details.append({'display': display_str, 'original_index': idx, 'type': c['type']})
-            elif c['type'] == 'Teacher Double Booked (Post-Check)':
-                display_str += f"Teacher: {c.get('instructor', 'N/A')} at {c.get('day','N/A')} {c.get('time_slot','N/A')}"
+                display_str += f"Section: {c.get('section', 'N/A')}, Subject: {c.get('subject', 'N/A')}"
                 conflict_options.append(display_str)
                 resolvable_conflict_details.append({'display': display_str, 'original_index': idx, 'type': c['type']})
-            # Add elif for 'Room Double Booked (Post-Check)' later
+            elif 'Double Book' in c.get('type', ''):
+                if 'Teacher Double Book' in c['type']:
+                    display_str += f"Teacher: {c.get('instructor', 'N/A')} at {c.get('day','N/A')} {c.get('time_slot','N/A')}"
+                elif 'Room Double Book' in c['type']:
+                    display_str += f"Room: {c.get('room', 'N/A')} at {c.get('day','N/A')} {c.get('time_slot','N/A')}"
+                conflict_options.append(display_str)
+                resolvable_conflict_details.append({'display': display_str, 'original_index': idx, 'type': c['type']})
 
         selected_conflict_display_str_main = st.selectbox(
-            "Choose a conflict:",
+            "Choose a conflict to resolve:",
             conflict_options,
             key="main_conflict_selector_tab4"
         )
 
-        # Update session state for selected conflict index and type
+        # Update session state for selected conflict
         if selected_conflict_display_str_main != "Select a conflict...":
             for item in resolvable_conflict_details:
                 if item['display'] == selected_conflict_display_str_main:
                     st.session_state.selected_conflict_to_resolve_idx = item['original_index']
                     st.session_state.selected_conflict_type = item['type']
-                    # Reset sub-selection for teacher double booking if a new conflict is chosen
-                    if st.session_state.selected_conflict_type != 'Teacher Double Booked (Post-Check)':
+                    if 'Double Book' not in item['type']:
                         st.session_state.class_to_modify_from_double_booking_idx = None
                     break
         else:
@@ -1195,8 +1490,7 @@ with tab_conflicts:
             st.session_state.manual_assignment_feedback = None
             st.session_state.class_to_modify_from_double_booking_idx = None
 
-
-        # --- Display Resolution Form based on Selected Conflict Type ---
+        # Display Resolution Form based on Selected Conflict Type
         if st.session_state.selected_conflict_to_resolve_idx is not None:
             conflict_original_idx = st.session_state.selected_conflict_to_resolve_idx
             
@@ -1206,54 +1500,80 @@ with tab_conflicts:
                 st.session_state.selected_conflict_type = None
             else:
                 conflict_to_resolve = st.session_state.conflicts[conflict_original_idx]
-
+                
+                st.markdown("---")
+                
                 # --- A. Resolver for "Unscheduled Class" ---
                 if st.session_state.selected_conflict_type == 'Unscheduled Class':
-                    # ... (displaying conflict details and form setup with selectboxes) ...
-                    # This is the form for unscheduled classes
+                    st.markdown(f"""
+                    <div class="conflict-card">
+                        <h4>🔴 Unscheduled Class Details</h4>
+                        <p><strong>Section:</strong> {conflict_to_resolve['section']}</p>
+                        <p><strong>Subject:</strong> {conflict_to_resolve['subject']}</p>
+                        <p><strong>Students:</strong> {conflict_to_resolve['students']}</p>
+                        <p><strong>Required Specialization:</strong> {conflict_to_resolve['required_specialization']}</p>
+                        <p><strong>Reason:</strong> {conflict_to_resolve['reason']}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
                     with st.form(key=f"unscheduled_form_{conflict_original_idx}"):
-                        # (Your selectboxes for selected_teacher, selected_room, selected_day, selected_time_slot)
-                        # ...
-                        sel_teacher_options = ["Select..."] 
-                        if st.session_state.get('parsed_instructors'): # Use .get for safety
-                            sel_teacher_options.extend(sorted([name for name, details in st.session_state['parsed_instructors'].items() if conflict_to_resolve['required_specialization'] in details['specializations']]))
-                        selected_teacher = st.selectbox("Select Teacher:", sel_teacher_options, key=f"uns_teacher_{conflict_original_idx}")
+                        st.markdown("### 📝 Manual Assignment")
                         
-                        sel_room_options = ["Select..."]
-                        if st.session_state.get('parsed_rooms'):
-                            sel_room_options.extend(sorted([name for name, room_slots in st.session_state['parsed_rooms'].items() if any(details['capacity'] >= conflict_to_resolve['students'] for details in room_slots.values())]))
-                        selected_room = st.selectbox("Select Room:", sel_room_options, key=f"uns_room_{conflict_original_idx}")
-
-                        selected_day = st.selectbox("Select Day:", ["Select..."] + DAYS_ORDER, key=f"uns_day_{conflict_original_idx}")
-                        selected_time_slot = st.selectbox("Select Time Slot:", ["Select..."] + TIME_SLOTS_ORDER_24HR, key=f"uns_time_{conflict_original_idx}")
-
-                        submitted_unscheduled_fix = st.form_submit_button("Force Assign Unscheduled Class") # Changed button label
-
+                        form_cols = st.columns(2)
+                        
+                        with form_cols[0]:
+                            # Teacher selection
+                            sel_teacher_options = ["Select..."]
+                            if st.session_state.get('parsed_instructors'):
+                                sel_teacher_options.extend(sorted([
+                                    name for name, details in st.session_state['parsed_instructors'].items()
+                                    if conflict_to_resolve['required_specialization'] in details['specializations']
+                                ]))
+                            selected_teacher = st.selectbox("Select Teacher:", sel_teacher_options, key=f"uns_teacher_{conflict_original_idx}")
+                            
+                            # Day selection
+                            selected_day = st.selectbox("Select Day:", ["Select..."] + DAYS_ORDER, key=f"uns_day_{conflict_original_idx}")
+                        
+                        with form_cols[1]:
+                            # Room selection
+                            sel_room_options = ["Select..."]
+                            if st.session_state.get('parsed_rooms'):
+                                sel_room_options.extend(sorted([
+                                    name for name, room_slots in st.session_state['parsed_rooms'].items()
+                                    if any(details['capacity'] >= conflict_to_resolve['students'] 
+                                          for details in room_slots.values())
+                                ]))
+                            selected_room = st.selectbox("Select Room:", sel_room_options, key=f"uns_room_{conflict_original_idx}")
+                            
+                            # Time slot selection
+                            selected_time_slot = st.selectbox("Select Time Slot:", ["Select..."] + TIME_SLOTS_ORDER_24HR, key=f"uns_time_{conflict_original_idx}")
+                        
+                        st.warning("⚠️ Force assignment will override all constraints and may create new conflicts. Use with caution!")
+                        
+                        submitted_unscheduled_fix = st.form_submit_button("🔧 Force Assign Class", type="primary", use_container_width=True)
+                        
                         if submitted_unscheduled_fix:
-                            st.session_state.manual_assignment_feedback = None 
+                            st.session_state.manual_assignment_feedback = None
+                            
                             if selected_teacher == "Select..." or selected_room == "Select..." or \
-                                selected_day == "Select..." or selected_time_slot == "Select...":
-                                st.error("Please make full selections for Teacher, Room, Day, and Time Slot to force assign.")
+                               selected_day == "Select..." or selected_time_slot == "Select...":
+                                st.error("❌ Please make complete selections for all fields.")
                             else:
-                                # --- "FORCE ASSIGN" LOGIC for Unscheduled Class ---
-                                # We are NOT calling check_manual_assignment_conflicts here.
-                                # We are NOT doing pre-assignment verifications for capacity/specialization here.
-                                # The admin is overriding all constraints for this specific action.
-
-                                # Get Subject Name (safer lookup)
-                                subject_name_val = 'N/A_SubjName'
+                                # Get additional details
+                                subject_name_val = 'N/A'
                                 if st.session_state.get('subjects_df') is not None:
-                                    subj_series = st.session_state['subjects_df'][st.session_state['subjects_df']['Subject Code'] == conflict_to_resolve['subject']]['Subject Name']
+                                    subj_series = st.session_state['subjects_df'][
+                                        st.session_state['subjects_df']['Subject Code'] == conflict_to_resolve['subject']
+                                    ]['Subject Name']
                                     if not subj_series.empty:
                                         subject_name_val = subj_series.iloc[0]
                                 
-                                # Get Room Capacity (safer lookup) - for information, not for constraint checking
-                                room_capacity_val = 'N/A_Cap'
+                                room_capacity_val = 'N/A'
                                 if st.session_state.get('parsed_rooms') and \
-                                    selected_room in st.session_state['parsed_rooms'] and \
-                                    (selected_day.upper(), selected_time_slot) in st.session_state['parsed_rooms'][selected_room]:
+                                   selected_room in st.session_state['parsed_rooms'] and \
+                                   (selected_day.upper(), selected_time_slot) in st.session_state['parsed_rooms'][selected_room]:
                                     room_capacity_val = st.session_state['parsed_rooms'][selected_room][(selected_day.upper(), selected_time_slot)]['capacity']
-
+                                
                                 forced_class_details = {
                                     'Section': conflict_to_resolve['section'],
                                     'Subject Code': conflict_to_resolve['subject'],
@@ -1263,11 +1583,11 @@ with tab_conflicts:
                                     'Day': selected_day.upper(),
                                     'Time Slot': selected_time_slot,
                                     'Students': conflict_to_resolve['students'],
-                                    'Room Capacity': room_capacity_val, # Informational
-                                    'Assignment Type': 'Manual (Forced)' 
+                                    'Room Capacity': room_capacity_val,
+                                    'Assignment Type': 'Manual (Forced)'
                                 }
-
-                                # Add directly to the schedule
+                                
+                                # Add to schedule
                                 if st.session_state.get('generated_schedule_df') is None:
                                     st.session_state.generated_schedule_df = pd.DataFrame([forced_class_details])
                                 else:
@@ -1277,165 +1597,171 @@ with tab_conflicts:
                                         ignore_index=True
                                     )
                                 
-                                # Remove the resolved "Unscheduled Class" conflict from the list
-                                st.session_state.conflicts.pop(conflict_original_idx) 
-                                                                    
-                                feedback_msg = (f"FORCE ASSIGNED: {forced_class_details['Subject Code']} "
-                                                f"for {forced_class_details['Section']} to {forced_class_details['Instructor']} "
-                                                f"in {forced_class_details['Room']} at {forced_class_details['Day']} {forced_class_details['Time Slot']}.\n"
-                                                f"Warning: This assignment was forced and may have created new conflicts (e.g., double bookings). "
-                                                f"Please re-run conflict checks or review the schedule carefully.")
-                                st.warning(feedback_msg) # Use st.warning for forced assignments
-                                st.session_state.manual_assignment_feedback = feedback_msg
+                                # Remove conflict
+                                st.session_state.conflicts.pop(conflict_original_idx)
+                                
+                                st.success(f"✅ Successfully force assigned {forced_class_details['Subject Code']} for {forced_class_details['Section']}!")
+                                st.warning("⚠️ This assignment was forced and may have created new conflicts. Please review the schedule carefully.")
                                 
                                 # Clear selection and rerun
-                                st.session_state.selected_conflict_to_resolve_idx = None 
+                                st.session_state.selected_conflict_to_resolve_idx = None
                                 st.session_state.selected_conflict_type = None
-                                st.rerun() 
+                                st.rerun()
 
                 # --- B. Resolver for "Teacher Double Booked" ---
-                elif st.session_state.selected_conflict_type == 'Teacher Double Booked (Post-Check)':
-                    st.markdown(f"**Resolving Teacher Double Booking (Conflict Orig.Idx: {conflict_original_idx}):**\n"
-                                f"- Teacher: **{conflict_to_resolve['instructor']}**\n"
-                                f"- Day: **{conflict_to_resolve['day']}**, Time: **{conflict_to_resolve['time_slot']}**\n"
-                                f"- Classes Involved: **{conflict_to_resolve['classes_involved']}**")
+                elif 'Teacher Double Book' in st.session_state.selected_conflict_type:
+                    st.markdown(f"""
+                    <div class="conflict-card">
+                        <h4>🔴 Teacher Double Booking</h4>
+                        <p><strong>Teacher:</strong> {conflict_to_resolve['instructor']}</p>
+                        <p><strong>Day:</strong> {conflict_to_resolve['day']}</p>
+                        <p><strong>Time:</strong> {conflict_to_resolve['time_slot']}</p>
+                        <p><strong>Conflicting Classes:</strong> {conflict_to_resolve['classes_involved']}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
                     
-                    # Find the actual class entries in generated_schedule_df that are conflicting
                     conflicting_schedule_entries = []
                     if st.session_state.generated_schedule_df is not None:
+                        # Ensure Day comparison is case-insensitive if necessary
+                        # Assuming conflict_to_resolve['day'] is already uppercase from post-check
                         conflicting_schedule_entries = st.session_state.generated_schedule_df[
                             (st.session_state.generated_schedule_df['Instructor'] == conflict_to_resolve['instructor']) &
-                            (st.session_state.generated_schedule_df['Day'].str.upper() == conflict_to_resolve['day'].upper()) & # Ensure case consistency
+                            (st.session_state.generated_schedule_df['Day'].str.upper() == conflict_to_resolve['day']) & # Match Day case
                             (st.session_state.generated_schedule_df['Time Slot'] == conflict_to_resolve['time_slot'])
-                        ].copy() # Use .copy()
-                        # Add an original DataFrame index to each entry for easy reference
-                        conflicting_schedule_entries['original_df_index'] = conflicting_schedule_entries.index 
+                        ].copy()
+                        if not conflicting_schedule_entries.empty:
+                             conflicting_schedule_entries['original_df_index'] = conflicting_schedule_entries.index
                     
                     if not conflicting_schedule_entries.empty:
-                        st.markdown("Select one class to modify/reschedule:")
+                        st.markdown("### 🔄 Select a class to forcibly reschedule:")
+                        
                         class_options_to_modify = ["Select a class..."] + \
-                            [f"Idx {row['original_df_index']}: {row['Subject Code']} for Sec {row['Section']} in Room {row['Room']}" 
+                            [f"ID {row['original_df_index']}: {row['Subject Code']} for {row['Section']} in {row['Room']}" 
                              for _, row in conflicting_schedule_entries.iterrows()]
                         
                         selected_class_str_to_modify = st.selectbox(
-                            "Class to Reschedule:", 
+                            "Choose class to forcibly move:", 
                             class_options_to_modify, 
-                            key=f"tdb_class_select_{conflict_original_idx}"
+                            key=f"tdb_class_select_force_{conflict_original_idx}" # New key for clarity
                         )
 
-                        # Store the original_df_index of the class chosen to be modified
                         if selected_class_str_to_modify != "Select a class...":
-                            # Extract original_df_index from the display string
                             try:
-                                df_idx_to_modify = int(selected_class_str_to_modify.split(':')[0].replace('Idx','').strip())
+                                df_idx_to_modify = int(selected_class_str_to_modify.split(':')[0].replace('ID','').strip())
                                 st.session_state.class_to_modify_from_double_booking_idx = df_idx_to_modify
                             except ValueError:
-                                 st.session_state.class_to_modify_from_double_booking_idx = None # Invalid format
-                        else:
-                            st.session_state.class_to_modify_from_double_booking_idx = None
+                                st.session_state.class_to_modify_from_double_booking_idx = None
 
-                        # If a class to modify is selected, show the form for its reassignment
-                        if st.session_state.class_to_modify_from_double_booking_idx is not None:
-                            class_to_modify_details = st.session_state.generated_schedule_df.loc[st.session_state.class_to_modify_from_double_booking_idx]
+                        if st.session_state.class_to_modify_from_double_booking_idx is not None and \
+                           st.session_state.class_to_modify_from_double_booking_idx in st.session_state.generated_schedule_df.index: # Check if index still valid
                             
-                            st.markdown(f"**Modifying:** {class_to_modify_details['Subject Code']} for Section {class_to_modify_details['Section']}")
+                            class_to_modify_details = st.session_state.generated_schedule_df.loc[
+                                st.session_state.class_to_modify_from_double_booking_idx
+                            ]
                             
-                            with st.form(key=f"tdb_resolve_form_{conflict_original_idx}_{st.session_state.class_to_modify_from_double_booking_idx}"):
-                                st.write("New Assignment Options (leave teacher/room/time same if not changing that aspect):")
+                            st.markdown(f"#### 📝 Forcibly Modifying: {class_to_modify_details['Subject Code']} for Section {class_to_modify_details['Section']}")
+                            
+                            with st.form(key=f"tdb_force_resolve_form_{conflict_original_idx}_{st.session_state.class_to_modify_from_double_booking_idx}"):
+                                st.write("**New Assignment** (This will be a forced assignment):")
                                 
-                                # Get Specialized Teachers for this subject
-                                required_spec_for_class = st.session_state.subjects_df[st.session_state.subjects_df['Subject Code'] == class_to_modify_details['Subject Code']]['Required Specialization'].iloc[0]
+                                form_cols = st.columns(2)
                                 
-                                tdb_teacher_options = ["Keep Original Teacher"] + sorted([
-                                    name for name, details in st.session_state.parsed_instructors.items() 
-                                    if required_spec_for_class in details['specializations'] and name != class_to_modify_details['Instructor'] # Exclude current teacher if changing
-                                ])
-                                new_teacher = st.selectbox("New Teacher (Optional):", tdb_teacher_options, key=f"tdb_teacher_{conflict_original_idx}")
-
-                                # Get Suitable Rooms
-                                tdb_room_options = ["Keep Original Room"] + sorted([
-                                    name for name, room_slots in st.session_state.parsed_rooms.items()
-                                    if any(details['capacity'] >= class_to_modify_details['Students'] for details in room_slots.values()) and name != class_to_modify_details['Room']
-                                ])
-                                new_room = st.selectbox("New Room (Optional):", tdb_room_options, key=f"tdb_room_{conflict_original_idx}")
+                                with form_cols[0]:
+                                    # Teacher: Allow selecting ANY teacher
+                                    all_teachers = ["Keep Original Teacher"] + sorted(list(st.session_state.parsed_instructors.keys())) if st.session_state.get('parsed_instructors') else ["Keep Original Teacher"]
+                                    new_teacher = st.selectbox("New Teacher:", all_teachers, key=f"tdb_force_teacher_{conflict_original_idx}")
+                                    
+                                    new_day = st.selectbox("New Day:", ["Keep Original Day"] + DAYS_ORDER, key=f"tdb_force_day_{conflict_original_idx}")
                                 
-                                # Select New Day and Time Slot
-                                new_day = st.selectbox("New Day (Optional - if changing time):", ["Keep Original Day"] + DAYS_ORDER, key=f"tdb_day_{conflict_original_idx}")
-                                new_time_slot = st.selectbox("New Time Slot (Optional - if changing time):", ["Keep Original Time Slot"] + TIME_SLOTS_ORDER_24HR, key=f"tdb_time_{conflict_original_idx}")
-
-                                submitted_tdb_fix = st.form_submit_button("Attempt to Apply Changes")
-
-                                if submitted_tdb_fix:
-                                    # --- Logic to apply TDB fix (Phase 2 for this conflict type) ---
+                                with form_cols[1]:
+                                    # Room: Allow selecting ANY room
+                                    all_rooms = ["Keep Original Room"] + sorted(list(st.session_state.parsed_rooms.keys())) if st.session_state.get('parsed_rooms') else ["Keep Original Room"]
+                                    new_room = st.selectbox("New Room:", all_rooms, key=f"tdb_force_room_{conflict_original_idx}")
+                                    
+                                    # Use TIME_SLOTS_ORDER_24HR if that's your correct variable name, or TIME_SLOTS_ORDER
+                                    new_time_slot = st.selectbox("New Time Slot:", ["Keep Original Time Slot"] + TIME_SLOTS_ORDER_24HR, key=f"tdb_force_time_{conflict_original_idx}") 
+                                
+                                st.warning("⚠️ This is a FORCE OVERRIDE. The selected class will be moved to the new teacher/room/slot regardless of existing schedules, specializations, or capacities. This may create new conflicts.")
+                                submitted_tdb_force_fix = st.form_submit_button("💣 Force Reschedule This Class", type="primary", use_container_width=True)
+                                
+                                if submitted_tdb_force_fix:
                                     st.session_state.manual_assignment_feedback = None
                                     
-                                    # Determine the actual values to use for the modified class
                                     final_teacher = new_teacher if new_teacher != "Keep Original Teacher" else class_to_modify_details['Instructor']
                                     final_room = new_room if new_room != "Keep Original Room" else class_to_modify_details['Room']
-                                    final_day = new_day.upper() if new_day != "Keep Original Day" else class_to_modify_details['Day'].upper()
+                                    final_day = new_day.upper() if new_day != "Keep Original Day" else class_to_modify_details['Day'].upper() # Ensure Day is upper
                                     final_time_slot = new_time_slot if new_time_slot != "Keep Original Time Slot" else class_to_modify_details['Time Slot']
-
-                                    # Check if anything actually changed
+                                    
                                     if final_teacher == class_to_modify_details['Instructor'] and \
                                        final_room == class_to_modify_details['Room'] and \
                                        final_day == class_to_modify_details['Day'].upper() and \
                                        final_time_slot == class_to_modify_details['Time Slot']:
-                                        st.warning("No changes selected. Please choose a new teacher, room, or time to resolve the conflict.")
-                                        st.session_state.manual_assignment_feedback = "No changes selected."
+                                        st.warning("⚠️ No changes selected to force. Please choose new values if you intend to move the class.")
                                     else:
-                                        # Create details for the MODIFIED class entry
-                                        modified_class_entry = class_to_modify_details.to_dict() # Start with original
-                                        modified_class_entry['Instructor'] = final_teacher
-                                        modified_class_entry['Room'] = final_room
-                                        modified_class_entry['Day'] = final_day
-                                        modified_class_entry['Time Slot'] = final_time_slot
-                                        modified_class_entry['Assignment Type'] = 'Manual (TDB Fix)'
-                                        
-                                        # Create a TEMPORARY schedule WITHOUT the class we are trying to move
-                                        temp_schedule_df = st.session_state.generated_schedule_df.drop(index=st.session_state.class_to_modify_from_double_booking_idx)
-                                        
-                                        # Check if the NEW placement conflicts with the REST of the schedule
-                                        new_placement_conflicts = check_manual_assignment_conflicts(
-                                            temp_schedule_df,
-                                            modified_class_entry # Check the new proposed slot
-                                        )
+                                        # --- FORCE ASSIGNMENT LOGIC ---
+                                        # No pre-checks for specialization or capacity here.
+                                        # No call to check_manual_assignment_conflicts here.
 
-                                        if not new_placement_conflicts:
-                                            # Update the original DataFrame at the specific index
-                                            for col, val in modified_class_entry.items():
-                                                st.session_state.generated_schedule_df.loc[st.session_state.class_to_modify_from_double_booking_idx, col] = val
-                                            
-                                            # Remove the original "Teacher Double Booked" conflict
-                                            st.session_state.conflicts.pop(conflict_original_idx)
-                                            
-                                            feedback_msg = (f"SUCCESS: Moved {class_to_modify_details['Subject Code']} for Sec {class_to_modify_details['Section']}. "
-                                                            f"New: {final_teacher}, {final_room}, {final_day} {final_time_slot}.")
-                                            st.success(feedback_msg)
-                                            st.session_state.manual_assignment_feedback = feedback_msg
-                                            st.session_state.selected_conflict_to_resolve_idx = None # Clear main selection
-                                            st.session_state.class_to_modify_from_double_booking_idx = None # Clear sub-selection
-                                            st.rerun()
+                                        # Update the class details in the main schedule DataFrame
+                                        idx_to_update = st.session_state.class_to_modify_from_double_booking_idx
+                                        
+                                        st.session_state.generated_schedule_df.loc[idx_to_update, 'Instructor'] = final_teacher
+                                        st.session_state.generated_schedule_df.loc[idx_to_update, 'Room'] = final_room
+                                        st.session_state.generated_schedule_df.loc[idx_to_update, 'Day'] = final_day
+                                        st.session_state.generated_schedule_df.loc[idx_to_update, 'Time Slot'] = final_time_slot
+                                        st.session_state.generated_schedule_df.loc[idx_to_update, 'Assignment Type'] = 'Manual (Forced TDB Fix)'
+                                        # You might want to update 'Room Capacity' to reflect the new room if it changed, for display consistency
+                                        if final_room != class_to_modify_details['Room'] and st.session_state.get('parsed_rooms') and \
+                                           final_room in st.session_state['parsed_rooms'] and \
+                                           (final_day, final_time_slot) in st.session_state['parsed_rooms'][final_room]:
+                                            st.session_state.generated_schedule_df.loc[idx_to_update, 'Room Capacity'] = st.session_state['parsed_rooms'][final_room][(final_day, final_time_slot)]['capacity']
+                                        elif final_room == class_to_modify_details['Room']:
+                                            # Keep original capacity or re-fetch if time changed for same room
+                                            pass 
                                         else:
-                                            error_msg = "COULD NOT APPLY CHANGES - New placement creates conflicts:\n"
-                                            for c_msg in new_placement_conflicts: error_msg += f"- {c_msg}\n"
-                                            st.error(error_msg)
-                                            st.session_state.manual_assignment_feedback = error_msg
-                    else: # No class selected to modify from the TDB conflict
-                        if selected_class_str_to_modify != "Select a class...": # if something was selected but became invalid
-                             st.warning("Please select a valid class to modify from the list above.")
-                             st.session_state.class_to_modify_from_double_booking_idx = None
+                                            st.session_state.generated_schedule_df.loc[idx_to_update, 'Room Capacity'] = 'N/A (Forced)'
 
 
-                # Add stubs for other conflict types later
-                # elif st.session_state.selected_conflict_type == 'Room Double Booked (Post-Check)':
-                #     st.info("Resolution for Room Double Bookings - To be implemented.")
+                                        # Remove the original "Teacher Double Booked" conflict
+                                        # Important: Ensure conflict_original_idx is still valid for st.session_state.conflicts
+                                        if 0 <= conflict_original_idx < len(st.session_state.conflicts):
+                                            st.session_state.conflicts.pop(conflict_original_idx)
+                                        else:
+                                            st.warning("Could not remove original conflict from list (index out of bounds). List may need refreshing.")
 
-        # General feedback display (if any)
-        if st.session_state.manual_assignment_feedback and not (submitted_unscheduled_fix or (locals().get('submitted_tdb_fix') and submitted_tdb_fix)):
-             st.info(f"Last operation feedback: {st.session_state.manual_assignment_feedback}")
+                                        feedback_msg = (f"FORCE RESCHEDULED: {class_to_modify_details['Subject Code']} for Sec {class_to_modify_details['Section']}. "
+                                                        f"New assignment: {final_teacher}, {final_room}, {final_day} {final_time_slot}.")
+                                        st.warning(feedback_msg) # Warning for forced actions
+                                        st.warning("This forced move may have created new conflicts. Review schedule carefully.")
+                                        st.session_state.manual_assignment_feedback = feedback_msg
+                                        
+                                        st.session_state.selected_conflict_to_resolve_idx = None
+                                        st.session_state.class_to_modify_from_double_booking_idx = None
+                                        st.rerun()
+                        # else part for if no class is selected to modify (selected_class_str_to_modify == "Select a class...")
+                        # or if st.session_state.class_to_modify_from_double_booking_idx is None
+                    else: # If conflicting_schedule_entries is empty (should not happen if TDB conflict exists)
+                        st.error("Could not find the conflicting class entries in the current schedule. Data may be inconsistent.")
 
+                # --- C. Resolver for "Room Double Booked" ---
+                elif 'Room Double Book' in st.session_state.selected_conflict_type:
+                    st.info("🚧 Room Double Booking resolution - Similar implementation to Teacher Double Booking")
+                    # Implementation would follow the same pattern as Teacher Double Booking
+
+        # Display last operation feedback
+        if st.session_state.manual_assignment_feedback:
+            st.info(f"Last operation: {st.session_state.manual_assignment_feedback}")
 
     elif st.session_state.generated_schedule_df is not None:
-        st.success("No conflicts or issues were reported by the scheduler!")
+        st.success("✅ No conflicts detected! Your schedule is optimized and ready to use.")
+        
+        # Show success metrics
+        success_cols = st.columns(3)
+        with success_cols[0]:
+            st.metric("Total Classes Scheduled", len(st.session_state.generated_schedule_df))
+        with success_cols[1]:
+            st.metric("Conflicts", 0, delta="All resolved!")
+        with success_cols[2]:
+            st.metric("Success Rate", "100%")
     else:
-        st.info("Scheduler has not been run yet (Tab 2), or no conflicts were generated to resolve.")
+        st.info("🔄 No schedule has been generated yet. Please run the scheduler first in the 'Run Scheduler' tab.")
