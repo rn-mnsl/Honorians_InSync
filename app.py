@@ -870,9 +870,10 @@ with tab_upload:
             with st.expander("🗺️ Curriculum Mapping Preview", expanded=False):
                 st.dataframe(st.session_state.curriculum_df.head(), use_container_width=True)
                 st.caption(f"Total curriculum entries: {len(st.session_state.curriculum_df)}")
+                
 # --- Tab 2: Run Scheduler ---
 with tab_run:
-    st.header("Run the Automated Scheduler")
+    st.header("🚀 Run the Automated Scheduler")
     
     ready_to_schedule_check = (
         st.session_state.classes_to_be_scheduled and 
@@ -881,28 +882,53 @@ with tab_run:
     )
 
     if not ready_to_schedule_check:
-        st.warning("Please ensure all data is uploaded and processed in Tab 1 before running the scheduler.")
+        st.warning("⚠️ Please ensure all data is uploaded and processed in the Upload tab before running the scheduler.")
+    else:
+        st.success(f"✅ Ready to schedule {len(st.session_state.classes_to_be_scheduled)} class instances!")
     
-    if st.button("Generate Class Schedule", disabled=not ready_to_schedule_check, type="primary"):
-        with st.spinner("Generating schedule... This may take a moment."):
-            schedule_result, conflicts_result = generate_schedule_attempt(
-                st.session_state.classes_to_be_scheduled,
-                st.session_state.parsed_instructors,
-                st.session_state.parsed_rooms
-            )
-        st.session_state.generated_schedule_df = pd.DataFrame(schedule_result)
-        st.session_state.conflicts = conflicts_result
-        
-        if st.session_state.generated_schedule_df is not None and not st.session_state.generated_schedule_df.empty:
-            st.success(f"Schedule generation complete! {len(st.session_state.generated_schedule_df)} classes scheduled.")
-            if st.session_state.conflicts:
-                 st.warning(f"{len(st.session_state.conflicts)} conflicts or issues found. Check Tab 4.")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        if st.button("🎯 Generate Class Schedule", 
+                     disabled=not ready_to_schedule_check, 
+                     type="primary", 
+                     use_container_width=True):
+            
+            with st.spinner("🔄 Generating optimal schedule... This may take a moment."):
+                schedule_result, conflicts_result = generate_schedule_attempt(
+                    st.session_state.classes_to_be_scheduled,
+                    st.session_state.parsed_instructors,
+                    st.session_state.parsed_rooms
+                )
+            
+            st.session_state.generated_schedule_df = pd.DataFrame(schedule_result)
+            st.session_state.conflicts = conflicts_result
+            
+            # Clear uploaded files after successful generation
+            clear_uploaded_files()
+            
+            if st.session_state.generated_schedule_df is not None and not st.session_state.generated_schedule_df.empty:
+                st.balloons()
+                st.success(f"✅ Schedule generation complete! {len(st.session_state.generated_schedule_df)} classes successfully scheduled.")
+                
+                # Show summary statistics
+                summary_cols = st.columns(4)
+                with summary_cols[0]:
+                    st.metric("Total Classes Scheduled", len(st.session_state.generated_schedule_df))
+                with summary_cols[1]:
+                    st.metric("Conflicts Found", len(st.session_state.conflicts))
+                with summary_cols[2]:
+                    if st.session_state.get('classes_to_be_scheduled') and len(st.session_state.classes_to_be_scheduled) > 0:
+                        success_rate = (len(st.session_state.generated_schedule_df) / len(st.session_state.classes_to_be_scheduled) * 100)
+                        st.metric("Success Rate", f"{success_rate:.1f}%")
+                    else:
+                        st.metric("Success Rate", "N/A")
+                with summary_cols[3]:
+                    st.metric("Unscheduled Classes", len([c for c in st.session_state.conflicts if c['type'] == 'Unscheduled Class']))
+                
+                st.info("📄 Uploaded files have been cleared. You can now view and export the generated schedule.")
             else:
-                 st.info("No conflicts detected from the scheduler run.")
-        elif st.session_state.conflicts:
-             st.error(f"Scheduler run complete. No classes scheduled. {len(st.session_state.conflicts)} conflicts/issues found.")
-        else:
-             st.info("Scheduler run complete. No classes scheduled and no conflicts reported (check input data and curriculum).")
+                st.error("❌ No classes could be scheduled. Please check your input data and try again.")
 
 # --- Tab 3: View Generated Schedule ---
 # In Tab 3, replace the export section with this:
